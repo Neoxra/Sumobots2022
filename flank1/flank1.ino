@@ -15,6 +15,10 @@ const int echo_pin_left = 10;
 long duration_left;
 int distance_left;
 
+// Start Button
+int button_pin = 7;
+int start = 1;
+
 // Distance sensor 2
 const int trig_pin_right = 11;
 const int echo_pin_right = 12;
@@ -32,14 +36,14 @@ int white = 0;
 int black = 1;
 
 // Motor control
-int motor1pin1 = 46;
-int motor1pin2 = 48;
+int motor1pin1 = 12;
+int motor1pin2 = 11;
 
-int motor2pin1 = 50;
-int motor2pin2 = 52;
+int motor2pin1 = 10;
+int motor2pin2 = 9;
 
-int motor1speed = 12;
-int motor2speed = 13;
+int motor1speed = 13;
+int motor2speed = 8;
 
 // See what state of the game we are in; initial start 0
 int gamestate = 0;
@@ -47,6 +51,9 @@ int gamestate = 0;
 
 void setup() {
   // Setup IO pins
+  pinMode(button_pin, INPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+  
   pinMode(trig_pin_left, OUTPUT); 
   pinMode(echo_pin_left, INPUT); 
   
@@ -73,10 +80,40 @@ void loop() {
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   
+  
+  while (start == 1) {
+    // Match start Sequence
+    int button_state = digitalRead(button_pin);
+    if (button_state == HIGH) {
+      // intiate 5 second count down
+      for (int i = 0; i <= 4; i++)  {
+        digitalWrite(LED_BUILTIN, HIGH);   
+        delay(500);                       
+        digitalWrite(LED_BUILTIN, LOW); 
+        delay(500);
+      }
+
+      // turn left till enemy
+      // proceed with strategy
+      
+      start = 0;
+    }
+    else {
+      for (int i = 0; i <= 2; i++) {
+        digitalWrite(LED_BUILTIN, HIGH);   
+        delay(50);                       
+        digitalWrite(LED_BUILTIN, LOW); 
+        delay(50);
+      }
+      delay(1000);
+    }
+  }
+ 
+
   // Step 1 move forward
   long int t1 = millis();
   long int t2 = millis();
-
+  
   if (gamestate == 1){
     // Take current runtime
     t1 = millis(); 
@@ -220,13 +257,13 @@ int check_any_line() {
   if (digitalRead(top_left) == white) {
     return 1;
   }
-  if (digitalRead(top_left) == white) {
+  if (digitalRead(top_right) == white) {
     return 2;
   }
-  if (digitalRead(top_left) == white) {
+  if (digitalRead(bottom_left) == white) {
     return 3;
   }
-  if (digitalRead(top_left) == white) {
+  if (digitalRead(bottom_left) == white) {
     return 4;
   }
 
