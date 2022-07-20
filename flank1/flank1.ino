@@ -7,6 +7,20 @@
 // Step five hit the openent. 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+/* 
+ * Strategy:
+ * Step 1 - Go forward  *** SCRAPPED THIS STEP *** 
+ * Step 2 - Turn left and find enemy
+ * Step 3 - Turn right until we can no longer see the oponent and then drive forward a bit
+ * Step 4 - Search for enemy again 
+ * Step 5 - Alligns self and charges at enemy .
+ * 
+ * Conditions:
+ *  - If the line sensor detects a line ( colour change to black ) , stop
+ *  - left side -> turn right , right side -> turn left
+ *  - front side -> reverse, back side -> forward
+ */
+ 
 // To be changed when robot is built
 
 // Start Button
@@ -20,6 +34,8 @@ const int echo_pin_right = 6;
 
 int scan_distance = 60;
 
+
+//  UPDATE PIN NUMBERS
 // Line sensors
 int top_left = A1;
 int top_right = A2;
@@ -70,6 +86,12 @@ void setup() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void loop() {
+
+  long int t1 = millis();
+  long int t2 = millis();
+
+  Serial.println("gamestate: ");
+  Serial.println(gamestate);
   
   // Step 0 Start - Wait for button to be pressed and then wait 5 seconds before start; else idle blinker led
   while (gamestate == 0) {
@@ -79,9 +101,8 @@ void loop() {
       for (int i = 0; i <= 4; i++)  {
         blink(500);
       }
-
-      gamestate = 1;
-      Serial.println("gamestate: 1");
+      gamestate = 2;
+//      Serial.println("gamestate: 1");
       blink(50);
     }
     else {
@@ -91,12 +112,9 @@ void loop() {
       delay(1000);  
     }
   }
- 
 
-  // Step 1 - move forward
-  long int t1 = millis();
-  long int t2 = millis();
-  
+  /*
+  // Step 1 - move forward  
   if (gamestate == 1){
     // Take current runtime
     t1 = millis(); 
@@ -117,39 +135,48 @@ void loop() {
     analogWrite(motor1speed, 0); 
     analogWrite(motor2speed, 0); 
     gamestate = 2;
-    Serial.println("gamestate: 2");
+//    Serial.println("gamestate: 2");
     blink(50);
     
   }
+  */
 
   // Step 2 - turn left and find enemy
   if (gamestate == 2) {
-  
-      analogWrite(motor1speed, 125); 
-      analogWrite(motor2speed, 0); 
+
+      // turning speeds are not the same, just to try be unpredictable and move in a weird pattern.
+      analogWrite(motor1speed, 180); 
+      analogWrite(motor2speed, 20); 
+      // Wheels are in opposite direction to get smaller turning angle. board isnt so big.
       digitalWrite(motor1pin1, HIGH);
       digitalWrite(motor1pin2, LOW);
-      digitalWrite(motor2pin1, HIGH);
-      digitalWrite(motor2pin2, LOW);
+      digitalWrite(motor2pin1, LOW);
+      digitalWrite(motor2pin2, HIGH);
 
     // Check to see if either sensors see something within scan_distance (mm)
-    if ((evaluate_distance(trig_pin_left, echo_pin_left) < scan_distance || evaluate_distance(trig_pin_right, echo_pin_right) < scan_distance) && check_any_line() == 0) {
+    if ((evaluate_distance(trig_pin_left, echo_pin_left) > scan_distance || evaluate_distance(trig_pin_right, echo_pin_right) > scan_distance) && check_any_line() == 0) {
       
       analogWrite(motor1speed, 0); 
       analogWrite(motor2speed, 0);
       gamestate = 3;
-      Serial.println("gamestate: 3");
+//      Serial.println("gamestate: 3");
       blink(50);
       
+    }
+    else{
+      // turn around and move away from edge, restart search for enemy.
+      gamestate = 2;
+      Serial.println("gamestate: 2 (hit line)");
+      blink(50);
     }
       
   }
 
   // Step 3 - Turn right until we can no longer see the oponent and then drive forward a bit
   if (gamestate == 3) {
-
+      Serial.println("here 1\n");
       analogWrite(motor1speed, 0); 
-      analogWrite(motor2speed, 125); 
+      analogWrite(motor2speed, 180); 
       digitalWrite(motor1pin1, HIGH);
       digitalWrite(motor1pin2, LOW);
       digitalWrite(motor2pin1, HIGH);
@@ -160,8 +187,8 @@ void loop() {
         t1 = millis();  
         t2 = millis();
 
-        while (t2 <= (t1 + 1000) && check_any_line() == 0) {
-          
+        while (t2 <= (t1 + 2000) && check_any_line() == 0) {
+          Serial.println("here 2\n");
           analogWrite(motor1speed, 255); 
           analogWrite(motor2speed, 255); 
           digitalWrite(motor1pin1, HIGH);
@@ -175,23 +202,30 @@ void loop() {
         analogWrite(motor1speed, 0); 
         analogWrite(motor2speed, 0); 
         gamestate = 4;
-        Serial.println("gamestate: 4");
+//        Serial.println("gamestate: 4");
         blink(50);
+    }
+    else{
+      // turn around and move away from edge, restart search for enemy.
+      gamestate = 2;
+      Serial.println("gamestate: 2 (hit line)");
+      blink(50);
     }
   }
 
-  // Search for enemy again (can mix with gamestaate 2 later if program works)
+  // Step 4 - Search for enemy again 
   if (gamestate == 4) {
-
-    analogWrite(motor1speed, 255); 
-    analogWrite(motor2speed, 0); 
-    digitalWrite(motor1pin1, HIGH);
-    digitalWrite(motor1pin2, LOW);
-    digitalWrite(motor2pin1, HIGH);
-    digitalWrite(motor2pin2, LOW);
+  // turning speeds are not the same, just to try be unpredictable and move in a weird pattern.
+      analogWrite(motor1speed, 180); 
+      analogWrite(motor2speed, 20); 
+      // Wheels are in opposite direction to get smaller turning angle. board isnt so big.
+      digitalWrite(motor1pin1, HIGH);
+      digitalWrite(motor1pin2, LOW);
+      digitalWrite(motor2pin1, LOW);
+      digitalWrite(motor2pin2, HIGH);
 
     // Check to see if either sensors see something within scan_distance (mm)
-    if (evaluate_distance(trig_pin_left, echo_pin_left) < scan_distance || evaluate_distance(trig_pin_right, echo_pin_right) < scan_distance && check_any_line() == 0) {
+    if ((evaluate_distance(trig_pin_left, echo_pin_left) > scan_distance || evaluate_distance(trig_pin_right, echo_pin_right) > scan_distance) && check_any_line() == 0) {
       
       analogWrite(motor1speed, 0); 
       analogWrite(motor2speed, 0);
@@ -199,9 +233,15 @@ void loop() {
       Serial.println("gamestate: 5");
       blink(50);
     }
+    else{
+      // turn around and move away from edge, restart search for enemy.
+      gamestate = 2;
+      Serial.println("gamestate: 2 (hit line)");
+      blink(50);
+    }
     
   }  
-  // alligning self charging enemy .
+  // Step 5 - Alligns self and charges forward at enemy .
   if (gamestate == 5) {
     
     digitalWrite(motor1pin1, HIGH);
@@ -212,13 +252,13 @@ void loop() {
     if (check_any_line() == 0) {
       
       if (evaluate_distance(trig_pin_left, echo_pin_left) > evaluate_distance(trig_pin_right, echo_pin_right)) {
-        analogWrite(motor1speed, 200); 
+        analogWrite(motor1speed, 180); 
         analogWrite(motor2speed, 255); 
       }
       
       if (evaluate_distance(trig_pin_left, echo_pin_left) < evaluate_distance(trig_pin_right, echo_pin_right)) {
         analogWrite(motor1speed, 255); 
-        analogWrite(motor2speed, 200); 
+        analogWrite(motor2speed, 180); 
       }
       
       if (evaluate_distance(trig_pin_left, echo_pin_left) == evaluate_distance(trig_pin_right, echo_pin_right)) {
@@ -229,8 +269,8 @@ void loop() {
     }
     else{
       // turn around and move away from edge, restart search for enemy.
-      gamestate = 1;
-      Serial.println("gamestate: 1 (hit line)");
+      gamestate = 2;
+      Serial.println("gamestate: 2 (hit line)");
       blink(50);
     }
     
@@ -252,7 +292,7 @@ int evaluate_distance(int trigPin, int echoPin) {
   unsigned int duration = pulseIn(echoPin, HIGH);
   // Calculating the distance
   unsigned int distance = duration * 0.034 / 2;
-  /*
+  
   // Prints the distance on the Serial Monitor
   if (trigPin == trig_pin_left) {
     Serial.print("Distance Left: ");
@@ -261,31 +301,92 @@ int evaluate_distance(int trigPin, int echoPin) {
   if (trigPin == trig_pin_right){
     Serial.print("Distance Right: ");
     Serial.println(distance);
-  }*/
+  }
 
   return distance;
   
 }
 
-// not working atm...
+
 int check_any_line() {
   // Check if any line sensor has seen the line
-  /*
+  // Take current runtime
+    t1 = millis(); 
+    t2 = millis();
+    
   if (digitalRead(top_left) == white) {
+    // Reverse right
+    while (t2 <= (t1 + 1000) && check_any_line() == 0) {
+      
+      analogWrite(motor1speed, 0); 
+      analogWrite(motor2speed, 255); 
+      digitalWrite(motor1pin1, LOW);
+      digitalWrite(motor1pin2, HIGH);
+      digitalWrite(motor2pin1, LOW);
+      digitalWrite(motor2pin2, HIGH);
+      
+      t2 = millis();
+    }
+    
+    analogWrite(motor1speed, 0); 
+    analogWrite(motor2speed, 0); 
     return 1;
   }
   if (digitalRead(top_right) == white) {
+    // Reverse left
+    while (t2 <= (t1 + 1000) && check_any_line() == 0) {
+      
+      analogWrite(motor1speed, 255); 
+      analogWrite(motor2speed, 0); 
+      digitalWrite(motor1pin1, LOW);
+      digitalWrite(motor1pin2, HIGH);
+      digitalWrite(motor2pin1, LOW);
+      digitalWrite(motor2pin2, HIGH);
+      
+      t2 = millis();
+    }
+    
+    analogWrite(motor1speed, 0); 
+    analogWrite(motor2speed, 0); 
     return 2;
   }
   if (digitalRead(bottom_left) == white) {
+    // Forward right
+    while (t2 <= (t1 + 1000) && check_any_line() == 0) {
+      
+      analogWrite(motor1speed, 0); 
+      analogWrite(motor2speed, 255); 
+      digitalWrite(motor1pin1, HIGH);
+      digitalWrite(motor1pin2, LOW);
+      digitalWrite(motor2pin1, HIGH);
+      digitalWrite(motor2pin2, LOW);
+      
+      t2 = millis();
+    }
+    
+    analogWrite(motor1speed, 0); 
+    analogWrite(motor2speed, 0); 
     return 3;
   }
   if (digitalRead(bottom_right) == white) {
+    // Forward Left
+    while (t2 <= (t1 + 1000) && check_any_line() == 0) {
+      
+      analogWrite(motor1speed, 255); 
+      analogWrite(motor2speed, 0); 
+      digitalWrite(motor1pin1, HIGH);
+      digitalWrite(motor1pin2, LOW);
+      digitalWrite(motor2pin1, HIGH);
+      digitalWrite(motor2pin2, LOW);
+      
+      t2 = millis();
+    }
+    
+    analogWrite(motor1speed, 0); 
+    analogWrite(motor2speed, 0); 
     return 4;
   } 
-
-  */
-
+  
   return 0;
 }
 
@@ -295,3 +396,7 @@ int blink(int delayLED) {
   digitalWrite(LED_BUILTIN, LOW); 
   delay(delayLED);
 }
+
+
+
+
